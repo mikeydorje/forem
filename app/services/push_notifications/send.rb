@@ -12,18 +12,19 @@ module PushNotifications
     end
 
     def call
+      Rails.logger.info "🔔 PushNotifications::Send called with user_ids: #{@user_ids}, title: '#{@title}', body: '#{@body}', payload: #{@payload}"
+      
       relation = Device.where(user_id: @user_ids)
+      Rails.logger.info "🔔 Found #{relation.count} devices for user_ids #{@user_ids}: #{relation.pluck(:id, :platform, :token).map { |id, platform, token| "Device #{id} (#{platform}): #{token[0..20]}..." }}"
 
       relation.find_each do |device|
-        device.create_notification(@title, @body, @payload)
+        Rails.logger.info "🔔 Creating notification for device #{device.id} (#{device.platform}) token: #{device.token[0..20]}..."
+        result = device.create_notification(@title, @body, @payload)
+        Rails.logger.info "🔔 Notification creation result for device #{device.id}: #{result.inspect}"
       end
 
-      # perform_in(30.seconds) is key: The background worker will execute Rpush.push which will send out all
-      # pending notifications. This means we don't need to run it for every PN. PushNotifications::DeliverWorker
-      # has a constraint that will execute the job only once (30 seconds from now). So if we need to send 1 PN
-      # every 5 seconds we only execute this once every 30s (no duplicate/unnecessary processing).
-      # If no PNs are scheduled to be sent for a 6h span then 0 jobs are executed.
-      PushNotifications::DeliverWorker.perform_in(30.seconds) if relation.any?
+      # Note: Using Firebase FCM V1 API directly now, no need for Rpush delivery worker
+      Rails.logger.info "🔔 Sent #{relation.count} push notifications via Firebase FCM"
     end
   end
 end

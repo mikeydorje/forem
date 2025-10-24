@@ -65,7 +65,10 @@ class CommentsController < ApplicationController
     authorize @comment
     permit_commenter
 
-    if @comment.save
+    # Use CommentCreator.save instead of @comment.save to trigger notifications
+    comment_creator = CommentCreator.new(permitted_attributes(Comment), current_user: current_user)
+    if comment_creator.save
+      @comment = comment_creator.record
       if @comment.invalid?
         render json: { error: I18n.t("comments_controller.create.failure") }, status: :unprocessable_entity
         return

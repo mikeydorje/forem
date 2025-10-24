@@ -12,60 +12,24 @@ class Device < ApplicationRecord
   validates :token, uniqueness: { scope: %i[user_id platform consumer_app_id] }
 
   def create_notification(title, body, payload)
-    # There's no need to create notifications for Consumer Apps that aren't
-    # operational. This happens when credentials aren't configured or delivery
-    # errors have been raised (i.e. expired authentication certificates)
-    return unless consumer_app.operational?
-
-    if android?
-      android_notification(title, body, payload)
-    elsif ios?
-      ios_notification(title, body, payload)
+    Rails.logger.info "🔔 Device#create_notification called for device #{id} (#{platform}) with title: '#{title}', body: '#{body}', payload: #{payload}"
+    
+    # Use new Firebase FCM V1 API approach instead of Rpush
+    begin
+      result = PushNotificationService.send_notification(
+        device_token: token,
+        title: title,
+        body: body.to_s.truncate(512),
+        data: payload.stringify_keys
+      )
+      
+      Rails.logger.info "🔔 Device#create_notification result: #{result.inspect}"
+      result
+    rescue => e
+      Rails.logger.error "❌ Device#create_notification ERROR: #{e.class}: #{e.message}"
+      Rails.logger.error e.backtrace.first(10).join("\n")
+      false
     end
   end
 
-  private
-
-  def ios_notification(title, body, payload)
-    n = Rpush::Apns2::Notification.new
-    n.device_token = token
-    n.app = ConsumerApps::RpushAppQuery.call(
-      app_bundle: consumer_app.app_bundle,
-      platform: platform,
-    )
-    n.data = {
-      aps: {
-        alert: {
-          title: Settings::Community.community_name,
-          subtitle: title,
-          body: body.truncate(512)
-        },
-        "thread-id": Settings::Community.community_name,
-        sound: "default",
-        # This key is required to modify the notification in the iOS app: https://developer.apple.com/documentation/usernotifications/modifying_content_in_newly_delivered_notifications#2942066
-        "mutable-content": 1
-      },
-      data: payload
-    }
-    n.save!
-  end
-
-  def android_notification(title, body, payload)
-    n = Rpush::Gcm::Notification.new
-    n.app = ConsumerApps::RpushAppQuery.call(
-      app_bundle: consumer_app.app_bundle,
-      platform: platform,
-    )
-    n.registration_ids = [token]
-    n.priority = "high"
-    n.content_available = true
-    n.notification = {
-      title: title,
-      body: body,
-      sound: "default",
-      click_action: ".presentation.home.HomeActivity"
-    }
-    n.data = { data: payload }
-    n.save!
-  end
 end

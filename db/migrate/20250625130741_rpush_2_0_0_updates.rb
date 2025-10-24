@@ -14,26 +14,28 @@ class Rpush200Updates < ActiveRecord::Migration[5.0]
   end
 
   def self.up
-    add_column :rpush_notifications, :processing, :boolean, null: false, default: false
-    add_column :rpush_notifications, :priority, :integer, null: true
+    safety_assured do
+      add_column :rpush_notifications, :processing, :boolean, null: false, default: false
+      add_column :rpush_notifications, :priority, :integer, null: true
 
-    if index_name_exists?(:rpush_notifications, :index_rpush_notifications_multi)
-      remove_index :rpush_notifications, name: :index_rpush_notifications_multi
-    end
+      if index_name_exists?(:rpush_notifications, :index_rpush_notifications_multi)
+        remove_index :rpush_notifications, name: :index_rpush_notifications_multi
+      end
 
-    add_index :rpush_notifications, [:delivered, :failed], name: 'index_rpush_notifications_multi', where: 'NOT delivered AND NOT failed'
+      add_index :rpush_notifications, [:delivered, :failed], name: 'index_rpush_notifications_multi', where: 'NOT delivered AND NOT failed'
 
-    rename_column :rpush_feedback, :app, :app_id
+      rename_column :rpush_feedback, :app, :app_id
 
-    if postgresql?
-      execute('ALTER TABLE rpush_feedback ALTER COLUMN app_id TYPE integer USING (trim(app_id)::integer)')
-    else
-      change_column :rpush_feedback, :app_id, :integer
-    end
+      if postgresql?
+        execute('ALTER TABLE rpush_feedback ALTER COLUMN app_id TYPE integer USING (trim(app_id)::integer)')
+      else
+        change_column :rpush_feedback, :app_id, :integer
+      end
 
-    [:Apns, :Gcm, :Wpns, :Adm].each do |service|
-      update_type(Rpush200Updates::Rpush::App, "Rpush::#{service}::App", "Rpush::Client::ActiveRecord::#{service}::App")
-      update_type(Rpush200Updates::Rpush::Notification, "Rpush::#{service}::Notification", "Rpush::Client::ActiveRecord::#{service}::Notification")
+      [:Apns, :Gcm, :Wpns, :Adm].each do |service|
+        update_type(Rpush200Updates::Rpush::App, "Rpush::#{service}::App", "Rpush::Client::ActiveRecord::#{service}::App")
+        update_type(Rpush200Updates::Rpush::Notification, "Rpush::#{service}::Notification", "Rpush::Client::ActiveRecord::#{service}::Notification")
+      end
     end
   end
 

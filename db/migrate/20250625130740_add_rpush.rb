@@ -28,7 +28,9 @@ class AddRpush < ActiveRecord::Migration[5.0]
   end
 
   def self.up
-    migrations.map(&:up)
+    safety_assured do
+      migrations.map(&:up)
+    end
   end
 
   def self.down
@@ -150,18 +152,18 @@ class AddRpush < ActiveRecord::Migration[5.0]
       AddGcm::Rapns::Notification.update_all type: 'Rapns::Apns::Notification'
       AddGcm::Rapns::App.update_all type: 'Rapns::Apns::App'
 
-      change_column :rapns_notifications, :type, :string, null: false
-      change_column :rapns_apps, :type, :string, null: false
-      change_column :rapns_notifications, :device_token, :string, null: true, limit: 64
-      change_column :rapns_notifications, :expiry, :integer, null: true, default: 1.day.to_i
-      change_column :rapns_apps, :environment, :string, null: true
-      change_column :rapns_apps, :certificate, :text, null: true, default: nil
-
-      change_column :rapns_notifications, :error_description, :text, null: true, default: nil
-      change_column :rapns_notifications, :sound, :string, default: 'default'
-
-      rename_column :rapns_notifications, :attributes_for_device, :data
-      rename_column :rapns_apps, :key, :name
+      safety_assured do
+        change_column :rapns_notifications, :type, :string, null: false
+        change_column :rapns_apps, :type, :string, null: false
+        change_column :rapns_notifications, :device_token, :string, null: true, limit: 64
+        change_column :rapns_notifications, :expiry, :integer, null: true, default: 1.day.to_i
+        change_column :rapns_apps, :environment, :string, null: true
+        change_column :rapns_apps, :certificate, :text, null: true, default: nil
+        change_column :rapns_notifications, :error_description, :text, null: true, default: nil
+        change_column :rapns_notifications, :sound, :string, default: 'default'
+        rename_column :rapns_notifications, :attributes_for_device, :data
+        rename_column :rapns_apps, :key, :name
+      end
 
       add_column :rapns_apps, :auth_key, :string, null: true
 
@@ -180,8 +182,10 @@ class AddRpush < ActiveRecord::Migration[5.0]
         AddGcm::Rapns::Notification.where(app: app.name).update_all(app_id: app.id)
       end
 
-      change_column :rapns_notifications, :app_id, :integer, null: false
-      remove_column :rapns_notifications, :app
+      safety_assured do
+        change_column :rapns_notifications, :app_id, :integer, null: false
+        remove_column :rapns_notifications, :app
+      end
 
       if index_name_exists?(:rapns_notifications, "index_rapns_notifications_multi")
         remove_index :rapns_notifications, name: "index_rapns_notifications_multi"
@@ -189,7 +193,9 @@ class AddRpush < ActiveRecord::Migration[5.0]
         remove_index :rapns_notifications, name: "index_rapns_notifications_on_delivered_failed_deliver_after"
       end
 
-      add_index :rapns_notifications, [:app_id, :delivered, :failed, :deliver_after], name: "index_rapns_notifications_multi"
+      safety_assured do
+        add_index :rapns_notifications, [:app_id, :delivered, :failed, :deliver_after], name: "index_rapns_notifications_multi"
+      end
     end
 
     def self.down

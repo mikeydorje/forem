@@ -59,6 +59,7 @@ class CalculateReactionPoints
   end
 
   def new_untrusted_user
+    return false if user.registered_at.nil?
     user.registered_at > NEW_USER_RAMPUP_DAYS_COUNT.days.ago && !user.trusted? && !user.any_admin?
   end
 
