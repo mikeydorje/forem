@@ -87,6 +87,29 @@ Sidekiq.configure_server do |config|
 end
 
 Sidekiq.configure_client do |config|
+  # Mirror server Redis options on the client so pushes don't fail TLS
+  sidekiq_url = ApplicationConfig["REDIS_SIDEKIQ_URL"] || ApplicationConfig["REDIS_URL"] || "redis://localhost:6379"
+  if Rails.env.development?
+    begin
+      require "uri"
+      uri = URI.parse(sidekiq_url)
+      uri.path = "/3" if uri.path.nil? || uri.path == "" || uri.path == "/"
+      sidekiq_url = uri.to_s
+    rescue URI::InvalidURIError
+    end
+  end
+
+  redis_opts = { url: sidekiq_url }
+  if ENV["REDIS_SSL_VERIFY"] == "false"
+    begin
+      require "openssl"
+      redis_opts[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+    rescue LoadError
+      # OpenSSL unavailable; proceed without overriding verification
+    end
+  end
+
+  config.redis = redis_opts
   config.client_middleware do |chain|
     chain.add SidekiqUniqueJobs::Middleware::Client
   end
