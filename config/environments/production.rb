@@ -74,7 +74,20 @@ Rails.application.configure do
   redis_url = ENV.fetch("REDISCLOUD_URL", nil)
   redis_url ||= ENV.fetch("REDIS_URL", nil)
   default_expiration = 24.hours.to_i
-  config.cache_store = :redis_cache_store, { url: redis_url, expires_in: default_expiration }
+  cache_options = { url: redis_url, expires_in: default_expiration }
+
+  # Allow disabling SSL verification for Redis when required by the hosting provider
+  if ENV["REDIS_SSL_VERIFY"] == "false"
+    require "openssl"
+    cache_options[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+  end
+
+  # Allow opting out of Redis entirely (e.g., for constrained environments)
+  if ENV["USE_MEMORY_CACHE"] == "true" || redis_url.blank?
+    config.cache_store = :memory_store, { size: 64.megabytes }
+  else
+    config.cache_store = :redis_cache_store, cache_options
+  end
 
   config.action_mailer.perform_caching = false
 
