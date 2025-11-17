@@ -796,13 +796,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.index ["slug"], name: "index_labels_on_slug", unique: true
   end
 
-  create_table "media_sources", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "display_url", null: false
-    t.string "input_url", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "media_stores", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "media_type", default: 0, null: false
@@ -856,6 +849,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.bigint "user_id", null: false
     t.index ["notifiable_id", "notifiable_type", "config"], name: "index_notification_subscriptions_on_notifiable_and_config"
     t.index ["user_id", "notifiable_type", "notifiable_id"], name: "idx_notification_subs_on_user_id_notifiable_type_notifiable_id", unique: true
+    t.index ["user_id", "notifiable_type", "notifiable_id"], name: "index_notification_subscriptions_on_user_notifiable"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -876,10 +870,13 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.index ["notified_at"], name: "index_notifications_on_notified_at"
     t.index ["organization_id", "notifiable_id", "notifiable_type", "action"], name: "index_notifications_on_org_notifiable_and_action_not_null", unique: true, where: "(action IS NOT NULL)"
     t.index ["organization_id", "notifiable_id", "notifiable_type"], name: "index_notifications_on_org_notifiable_action_is_null", unique: true, where: "(action IS NULL)"
+    t.index ["subforem_id", "user_id", "notified_at"], name: "index_notifications_on_subforem_user_notified_at"
     t.index ["subforem_id"], name: "index_notifications_on_subforem_id"
     t.index ["user_id", "notifiable_id", "notifiable_type", "action"], name: "index_notifications_on_user_notifiable_and_action_not_null", unique: true, where: "(action IS NOT NULL)"
     t.index ["user_id", "notifiable_id", "notifiable_type"], name: "index_notifications_on_user_notifiable_action_is_null", unique: true, where: "(action IS NULL)"
+    t.index ["user_id", "notified_at"], name: "index_notifications_on_user_id_and_notified_at_desc", order: { notified_at: :desc }
     t.index ["user_id", "organization_id", "notifiable_id", "notifiable_type", "action"], name: "index_notifications_user_id_organization_id_notifiable_action", unique: true
+    t.index ["user_id", "read", "notified_at"], name: "index_notifications_on_user_id_read_notified_at"
   end
 
   create_table "organization_memberships", force: :cascade do |t|
@@ -1158,7 +1155,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "created_at", null: false
     t.jsonb "data", default: {}, null: false
     t.string "location"
-    t.string "social_image"
     t.text "summary"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -1194,6 +1190,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.index ["reactable_type"], name: "index_reactions_on_reactable_type"
     t.index ["status"], name: "index_reactions_on_status"
     t.index ["user_id", "reactable_id", "reactable_type", "category"], name: "index_reactions_on_user_id_reactable_id_reactable_type_category", unique: true
+    t.index ["user_id", "reactable_type", "reactable_id"], name: "index_reactions_on_user_reactable"
   end
 
   create_table "recommended_articles_lists", force: :cascade do |t|
@@ -1233,6 +1230,75 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.index ["name"], name: "index_roles_on_name"
   end
 
+  create_table "rpush_apps", force: :cascade do |t|
+    t.string "access_token"
+    t.datetime "access_token_expiration"
+    t.text "apn_key"
+    t.string "apn_key_id"
+    t.string "auth_key"
+    t.string "bundle_id"
+    t.text "certificate"
+    t.string "client_id"
+    t.string "client_secret"
+    t.integer "connections", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.string "environment"
+    t.boolean "feedback_enabled", default: true
+    t.string "name", null: false
+    t.string "password"
+    t.string "team_id"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "rpush_feedback", force: :cascade do |t|
+    t.integer "app_id"
+    t.datetime "created_at", null: false
+    t.string "device_token"
+    t.datetime "failed_at", precision: nil, null: false
+    t.datetime "updated_at", null: false
+    t.index ["device_token"], name: "index_rpush_feedback_on_device_token"
+  end
+
+  create_table "rpush_notifications", force: :cascade do |t|
+    t.text "alert"
+    t.boolean "alert_is_json", default: false, null: false
+    t.integer "app_id", null: false
+    t.integer "badge"
+    t.string "category"
+    t.string "collapse_key"
+    t.boolean "content_available", default: false, null: false
+    t.datetime "created_at", null: false
+    t.text "data"
+    t.boolean "delay_while_idle", default: false, null: false
+    t.datetime "deliver_after", precision: nil
+    t.boolean "delivered", default: false, null: false
+    t.datetime "delivered_at", precision: nil
+    t.string "device_token"
+    t.boolean "dry_run", default: false, null: false
+    t.integer "error_code"
+    t.text "error_description"
+    t.integer "expiry", default: 86400
+    t.string "external_device_id"
+    t.datetime "fail_after", precision: nil
+    t.boolean "failed", default: false, null: false
+    t.datetime "failed_at", precision: nil
+    t.boolean "mutable_content", default: false, null: false
+    t.text "notification"
+    t.integer "priority"
+    t.boolean "processing", default: false, null: false
+    t.text "registration_ids"
+    t.integer "retries", default: 0
+    t.string "sound"
+    t.boolean "sound_is_json", default: false
+    t.string "thread_id"
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.string "uri"
+    t.text "url_args"
+    t.index ["delivered", "failed", "processing", "deliver_after", "created_at"], name: "index_rpush_notifications_multi", where: "((NOT delivered) AND (NOT failed))"
+  end
+
   create_table "scheduled_automations", force: :cascade do |t|
     t.string "action", null: false
     t.jsonb "action_config", default: {}
@@ -1269,6 +1335,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_authentications_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_authentications_on_var_and_subforem_id", unique: true
   end
 
@@ -1278,6 +1345,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_campaigns_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_campaigns_on_var_and_subforem_id", unique: true
   end
 
@@ -1287,6 +1355,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_communities_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_communities_on_var_and_subforem_id", unique: true
   end
 
@@ -1296,6 +1365,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_rate_limits_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_rate_limits_on_var_and_subforem_id", unique: true
   end
 
@@ -1305,6 +1375,7 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_smtp_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_smtp_on_var_and_subforem_id", unique: true
   end
 
@@ -1314,15 +1385,17 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
     t.datetime "updated_at", null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_settings_user_experiences_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_settings_user_experiences_on_var_and_subforem_id", unique: true
   end
 
   create_table "site_configs", force: :cascade do |t|
     t.datetime "created_at", precision: nil, null: false
-    t.integer "subforem_id"
+    t.bigint "subforem_id"
     t.datetime "updated_at", precision: nil, null: false
     t.text "value"
     t.string "var", null: false
+    t.index ["subforem_id"], name: "index_site_configs_on_subforem_id"
     t.index ["var", "subforem_id"], name: "index_site_configs_on_var_and_subforem_id", unique: true
   end
 
@@ -1700,7 +1773,6 @@ ActiveRecord::Schema[7.0].define(version: 2025_11_07_175200) do
   end
 
   create_table "users_settings", force: :cascade do |t|
-    t.boolean "auto_relocation_enabled", default: true, null: false
     t.string "brand_color1", default: "#000000"
     t.integer "config_font", default: 0, null: false
     t.integer "config_homepage_feed", default: 0, null: false

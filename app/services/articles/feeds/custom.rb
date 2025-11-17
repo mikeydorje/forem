@@ -67,7 +67,6 @@ module Articles
           .limit(@number_of_articles)
           .offset((@page - 1) * @number_of_articles)
           .limited_column_select
-          .includes(:subforem) # Only include essential associations
           .from_subforem
 
         # Include necessary associations for performance

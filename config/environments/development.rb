@@ -126,6 +126,11 @@ Rails.application.configure do
 
   config.public_file_server.enabled = true
 
+  # Disable HTTP compression in development to avoid Content-Encoding issues
+  # Rack::Deflater is added globally in application.rb; browsers may report
+  # ERR_CONTENT_DECODING_FAILED if headers/body get out of sync in dev.
+  config.middleware.delete Rack::Deflater
+
   # Use an evented file watcher to asynchronously detect changes in source code,
   # routes, locales, etc. This feature depends on the listen gem.
   config.file_watcher = ActiveSupport::EventedFileUpdateChecker

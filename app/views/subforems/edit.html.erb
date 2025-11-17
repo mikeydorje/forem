@@ -14,6 +14,7 @@
         <li><a href="#section-feed" class="manage-sidebar-link" data-section="section-feed">Feed & Content</a></li>
         <li><a href="#section-branding" class="manage-sidebar-link" data-section="section-branding">Branding</a></li>
         <li><a href="#section-tags" class="manage-sidebar-link" data-section="section-tags">Supported Tags</a></li>
+        <li><a href="#section-rss-feeds" class="manage-sidebar-link" data-section="section-rss-feeds">RSS Feeds</a></li>
         <li><a href="#section-pages" class="manage-sidebar-link" data-section="section-pages">Pages</a></li>
         <li><a href="#section-nav-links" class="manage-sidebar-link" data-section="section-nav-links">Navigation Links</a></li>
         <li><a href="#section-bots" class="manage-sidebar-link" data-section="section-bots">Community Bots</a></li>
@@ -299,6 +300,88 @@
       <% else %>
         <p class="text-sm color-base-60"><%= t("views.subforems.edit.tags.no_unsupported_tags") %></p>
       <% end %>
+    </div>
+
+    <!-- RSS FEEDS SECTION -->
+    <div class="crayons-card p-6 mb-4" id="section-rss-feeds">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="crayons-title">RSS Feed Sources</h2>
+          <p class="text-sm color-base-60 mt-1">Automatically import articles from external RSS feeds. Each feed will post as a dedicated bot user.</p>
+        </div>
+      </div>
+
+      <!-- Add RSS Feed Form -->
+      <div class="mb-6 p-4 bg-base-5 rounded-lg">
+        <div class="flex gap-2">
+          <input type="text" 
+                 id="new-rss-feed-url" 
+                 placeholder="https://example.com/feed" 
+                 class="crayons-textfield flex-1">
+          <button type="button" 
+                  id="add-rss-feed-btn" 
+                  class="crayons-btn crayons-btn--primary">
+            Add Feed
+          </button>
+        </div>
+        <div id="rss-feed-error" class="crayons-notice crayons-notice--danger mt-2 hidden"></div>
+        <div id="rss-feed-success" class="crayons-notice crayons-notice--success mt-2 hidden"></div>
+      </div>
+
+      <!-- RSS Feeds List -->
+      <div id="rss-feeds-list">
+        <% if @rss_feeds.any? %>
+          <div class="space-y-3">
+            <% @rss_feeds.each do |rss_feed| %>
+              <div class="flex items-center justify-between p-3 bg-base-5 rounded-lg" data-rss-feed-id="<%= rss_feed.id %>">
+                <div class="flex-1">
+                  <div class="font-medium flex items-center gap-2">
+                    <span class="text-lg">📡</span>
+                    <%= rss_feed.feed_url %>
+                    <% if rss_feed.enabled %>
+                      <span class="crayons-tag crayons-tag--s crayons-tag--success">Enabled</span>
+                    <% else %>
+                      <span class="crayons-tag crayons-tag--s crayons-tag--warning">Disabled</span>
+                    <% end %>
+                  </div>
+                  <div class="text-sm color-base-60 mt-1">
+                    <% if rss_feed.bot_user %>
+                      Bot: <strong>@<%= rss_feed.bot_user.username %></strong>
+                    <% else %>
+                      <em>Creating bot user...</em>
+                    <% end %>
+                    <% if rss_feed.last_fetched_at %>
+                      | Last fetched: <%= time_ago_in_words(rss_feed.last_fetched_at) %> ago
+                    <% else %>
+                      | Never fetched
+                    <% end %>
+                    | Articles imported: <%= rss_feed.articles_imported_count %>
+                  </div>
+                  <% if rss_feed.last_import_error.present? %>
+                    <div class="text-xs color-accent-danger mt-1">
+                      Error: <%= rss_feed.last_import_error.truncate(100) %>
+                    </div>
+                  <% end %>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" 
+                          class="crayons-btn crayons-btn--s crayons-btn--secondary fetch-rss-feed-btn"
+                          data-rss-feed-id="<%= rss_feed.id %>">
+                    Fetch Now
+                  </button>
+                  <button type="button" 
+                          class="crayons-btn crayons-btn--s crayons-btn--danger remove-rss-feed-btn"
+                          data-rss-feed-id="<%= rss_feed.id %>">
+                    Remove
+                  </button>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-sm color-base-60">No RSS feeds configured. Add one above to get started.</p>
+        <% end %>
+      </div>
     </div>
 
     <!-- PAGES SECTION -->
@@ -624,6 +707,123 @@ function initializeSubforemEditPage() {
         colorPicker.value = this.value;
       }
     });
+  }
+  
+  // RSS Feed Management
+  const addRssFeedBtn = document.getElementById('add-rss-feed-btn');
+  const newRssFeedInput = document.getElementById('new-rss-feed-url');
+  
+  if (addRssFeedBtn && newRssFeedInput) {
+    addRssFeedBtn.addEventListener('click', function() {
+      const feedUrl = newRssFeedInput.value.trim();
+      
+      if (!feedUrl) {
+        showRssFeedMessage('error', 'Please enter a feed URL');
+        return;
+      }
+      
+      addRssFeedBtn.disabled = true;
+      addRssFeedBtn.textContent = 'Adding...';
+      
+      fetch('/subforems/<%= @subforem.id %>/add_rss_feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ feed_url: feedUrl })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showRssFeedMessage('success', data.message);
+          newRssFeedInput.value = '';
+          setTimeout(() => location.reload(), 1000);
+        } else {
+          showRssFeedMessage('error', data.message);
+        }
+      })
+      .catch(() => showRssFeedMessage('error', 'An error occurred'))
+      .finally(() => {
+        addRssFeedBtn.disabled = false;
+        addRssFeedBtn.textContent = 'Add Feed';
+      });
+    });
+  }
+  
+  // Remove RSS Feed
+  document.querySelectorAll('.remove-rss-feed-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      if (!confirm('Are you sure you want to remove this RSS feed?')) return;
+      
+      const rssFeedId = this.dataset.rssFeedId;
+      const feedElement = this.closest('[data-rss-feed-id]');
+      
+      fetch('/subforems/<%= @subforem.id %>/remove_rss_feed/' + rssFeedId, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          feedElement.remove();
+          showRssFeedMessage('success', data.message);
+        } else {
+          showRssFeedMessage('error', data.message);
+        }
+      })
+      .catch(() => showRssFeedMessage('error', 'An error occurred'));
+    });
+  });
+  
+  // Fetch RSS Feed Now
+  document.querySelectorAll('.fetch-rss-feed-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const rssFeedId = this.dataset.rssFeedId;
+      const originalText = this.textContent;
+      
+      this.disabled = true;
+      this.textContent = 'Fetching...';
+      
+      fetch('/subforems/<%= @subforem.id %>/fetch_rss_feed/' + rssFeedId, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        showRssFeedMessage(data.success ? 'success' : 'error', data.message);
+      })
+      .catch(() => showRssFeedMessage('error', 'An error occurred'))
+      .finally(() => {
+        this.disabled = false;
+        this.textContent = originalText;
+      });
+    });
+  });
+  
+  function showRssFeedMessage(type, message) {
+    const errorEl = document.getElementById('rss-feed-error');
+    const successEl = document.getElementById('rss-feed-success');
+    
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+    
+    if (type === 'error') {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+    } else {
+      successEl.textContent = message;
+      successEl.classList.remove('hidden');
+    }
+    
+    setTimeout(() => {
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+    }, 5000);
   }
   
   // Add tag functionality
