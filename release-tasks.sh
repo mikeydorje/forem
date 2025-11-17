@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Skip release tasks if env var is set (useful for Heroku initial deploy)
+if [[ $SKIP_RELEASE_TASKS = "true" ]]; then
+  echo "Skipping release tasks..."
+  exit 0
+fi
+
 notify () {
   FAILED_COMMAND="$(caller): ${BASH_COMMAND}" \
     bundle exec rails runner "ReleasePhaseNotifier.ping_slack"
