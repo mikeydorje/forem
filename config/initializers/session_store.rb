@@ -28,6 +28,19 @@ rescue PublicSuffix::DomainInvalid
 end
 
 # Main session store
+begin
+  if ENV["REDIS_SSL_VERIFY"] == "false"
+    require "openssl"
+    if servers.is_a?(String)
+      servers = { url: servers, ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+    elsif servers.is_a?(Hash)
+      servers[:ssl_params] ||= { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+    end
+  end
+rescue LoadError
+  # OpenSSL not available; continue without ssl_params override
+end
+
 Rails.application.config.session_store :redis_store,
                                        key: ApplicationConfig["SESSION_KEY"],
                                        domain: domain,

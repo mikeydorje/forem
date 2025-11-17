@@ -43,7 +43,16 @@ Sidekiq.configure_server do |config|
   end
   # On Heroku this configuration is overridden and Sidekiq will point at the redis
   # instance given by the ENV variable REDIS_PROVIDER
-  config.redis = { url: sidekiq_url }
+  redis_opts = { url: sidekiq_url }
+  if ENV["REDIS_SSL_VERIFY"] == "false"
+    begin
+      require "openssl"
+      redis_opts[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+    rescue LoadError
+      # OpenSSL unavailable; proceed without overriding verification
+    end
+  end
+  config.redis = redis_opts
 
   config.server_middleware do |chain|
     chain.add Sidekiq::TransactionSafeRescue

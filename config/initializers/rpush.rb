@@ -4,7 +4,16 @@ Rpush.configure do |config|
   config.client = :redis
 
   # Options passed to Redis.new
-  config.redis_options = { url: ENV.fetch("REDIS_RPUSH_URL") { ENV.fetch("REDIS_URL", nil) }, driver: :ruby }
+  redis_options = { url: ENV.fetch("REDIS_RPUSH_URL") { ENV.fetch("REDIS_URL", nil) }, driver: :ruby }
+  if ENV["REDIS_SSL_VERIFY"] == "false"
+    begin
+      require "openssl"
+      redis_options[:ssl_params] = { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+    rescue LoadError
+      # OpenSSL unavailable; proceed without overriding verification
+    end
+  end
+  config.redis_options = redis_options
 
   # Frequency in seconds to check for new notifications.
   config.push_poll = 2
