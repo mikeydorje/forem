@@ -1,0 +1,71 @@
+Chat History Summary (through 2025-11-21)
+
+1. Staging Environment Setup
+   - Created personal Heroku staging app for Forem fork; resolved domain hash suffix.
+   - Set settings: community_name = "Prod Test", feed_style = rich.
+   - Managed Redis TLS opt-out via REDIS_SSL_VERIFY=false and memory cache fallback.
+   - Avoided release tasks with SKIP_RELEASE_TASKS=true.
+
+2. RSS Import & Content Fixes
+   - Imported external RSS feed posts for demo purposes.
+   - Patched nil profile crash (user profile summary guard).
+   - Cleaned imported articles: main image backfill, duplicate inline image removal, standardized footer.
+
+3. Branch Hygiene & Audit
+   - Reset local main to upstream/main.
+   - Isolated heroku-demo branch for staging-only changes.
+   - Audited large sets of legacy / experimental branches (embed prototypes, badge API spike, listings removal cluster).
+   - Deleted batches A, B, C (14 local) then batches D/E (29 local + remote where present).
+   - Preserved active branches: main, heroku-demo, apns-dry-run, android-notification-support-clean, fcm-v1-min, fcm-v1-test, improve-url-validation-security, google-omniauth-csrf-config-fresh.
+
+4. Remaining Optional Work
+   - Refactor RSS importer into service + rake task with specs (VCR for image/read-more cases).
+   - Add push notification test harness (APNs/FCM) with dry-run mode.
+   - Document fast workflow: staging deploy, cache-busting, RSS importer usage, push harness usage.
+   - Feed cover sanity checks & localStorage/cache invalidation instructions.
+
+5. Push Notification Plan (High-Level)
+   - Harness: ENV-driven tokens and credentials; rake task `push:test[apns|fcm|all]`.
+   - Dry-run default; explicit override with PUSH_TEST_DRY_RUN=false.
+   - Separate from upstream PR code until production-ready.
+
+6. Workspace / Multi-Repo Integration Issue
+   - Current agent sandbox limited to /home/organicelectronics/forem.
+   - React/Jopine app located at /home/organicelectronics/app not directly readable.
+   - Proposed solutions: (a) Reopen VS Code at parent directory; (b) Add folder to multi-root workspace recognized by agent; (c) Copy or selectively mirror needed files; (d) Potential symlink (may still be blocked by sandbox path restrictions).
+
+7. Safe Git Practices Established
+   - Use `git reset --hard upstream/main` to sync main.
+   - Feature branches for PRs: start from fresh main; keep staging code isolated.
+   - Manual prune executed (`git fetch -p`); auto-prune intentionally not enabled.
+
+8. Key Decisions
+   - Chose not to archive experimental badge branches with tags; deleted outright.
+   - Kept security-related URL validation branch for further work.
+
+9. Next Suggested Actions
+   - Integrate React repo (choose method above); re-run audit for any overlapping feature work.
+   - Implement push harness before deeper notification feature expansion.
+   - Decide on RSS importer refactor scope (minimal vs fully tested).
+
+10. Commands Reference
+   - Sync main: `git checkout main && git fetch upstream && git reset --hard upstream/main`
+   - Staging deploy (example): `git checkout heroku-demo && git merge main` then push/deploy.
+   - Prune remote refs: `git fetch -p`
+   - Potential push harness run (after implementation): `heroku run rake push:test[apns] -a <app>`
+
+11. Active Branch Set (Post-Cleanup)
+   - main
+   - heroku-demo
+   - mikeydorje/apns-dry-run
+   - mikeydorje/android-notification-support-clean
+   - mikeydorje/fcm-v1-min
+   - mikeydorje/fcm-v1-test
+   - mikeydorje/improve-url-validation-security
+   - mikey/google-omniauth-csrf-config-fresh
+
+12. Notes
+   - This summary omits verbatim transcript for brevity; focus is actionable context.
+   - Regenerate an extended log if needed by copying chat messages manually.
+
+End of Summary.

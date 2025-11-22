@@ -42,3 +42,22 @@ Before testing registration from the app:
 Notes
 - This harness bypasses Rpush and sends directly via FCM v1 HTTP API.
 - For production feature work, device registration and event-triggered sends will follow in subsequent PRs.
+
+Trigger Bridge (Event Hooks)
+- The system is now configured to automatically send a push notification when a `Notification` record is created.
+- This uses `PushNotifications::SenderWorker` which is triggered by `after_commit` on the `Notification` model.
+- It targets Android devices registered via the `Device` model.
+
+Testing the Trigger
+1) Ensure the app is registered (Device record exists).
+2) Trigger a notification in Rails console:
+   ```ruby
+   # In heroku console
+   u = User.find_by(email: "your_email@example.com")
+   Notification.create!(
+     user: u,
+     notifiable: Article.last, # or any valid notifiable
+     action: "Published"
+   )
+   ```
+3) Check logs for `[Push::FcmV1Client]` output.

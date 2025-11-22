@@ -11,6 +11,7 @@ class Notification < ApplicationRecord
   validates :user_id, uniqueness: { scope: %i[organization_id notifiable_id notifiable_type action] }
 
   before_create :mark_notified_at_time
+  after_commit :trigger_push_notification, on: :create
 
   scope :for_published_articles, -> { where(notifiable_type: "Article", action: "Published") }
   scope :for_comments, -> { where(notifiable_type: "Comment", action: nil) } # nil action means "not a reaction"
@@ -190,5 +191,9 @@ class Notification < ApplicationRecord
 
   def mark_notified_at_time
     self.notified_at = Time.current
+  end
+
+  def trigger_push_notification
+    PushNotifications::SenderWorker.perform_async(id)
   end
 end
