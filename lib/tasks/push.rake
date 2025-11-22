@@ -11,7 +11,7 @@ namespace :push do
     data  = {}
     data[:url] = ENV["URL"] if ENV["URL"]
 
-    project_id = ENV["FIREBASE_PROJECT_ID"] || "forem-5d94b"
+    project_id = ENV["FCM_PROJECT_ID"] || ENV["FIREBASE_PROJECT_ID"] || "forem-5d94b"
     sa_path    = ENV["GOOGLE_APPLICATION_CREDENTIALS"] || ENV["FIREBASE_SA_PATH"]
     abort "Service account path missing (GOOGLE_APPLICATION_CREDENTIALS)" unless sa_path && File.exist?(sa_path)
 

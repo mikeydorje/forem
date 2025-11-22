@@ -5,14 +5,14 @@ Overview
 - Scope: Android only. Uses Google service account OAuth via `googleauth`.
 
 Prereqs
-- Env var `FIREBASE_PROJECT_ID` (e.g. `forem-5d94b`).
+- Env var `FCM_PROJECT_ID` (e.g. `forem-5d94b`).
 - Service account JSON available to the dyno and pointed to by `GOOGLE_APPLICATION_CREDENTIALS`.
 - Gem installed: `googleauth`.
 
 Local Test (optional)
 1) Ensure `bundle install` includes `googleauth`.
 2) Export env:
-   - `export FIREBASE_PROJECT_ID=forem-5d94b`
+   - `export FCM_PROJECT_ID=forem-5d94b`
    - `export GOOGLE_APPLICATION_CREDENTIALS=/abs/path/firebase-service-account.json`
 3) Run task:
    - `FCM_TOKEN="<device_token>" TITLE="Test" BODY="Hello" bundle exec rake push:send_token`
@@ -23,9 +23,10 @@ Heroku Staging
    - B) Bake or upload the file to `/app/secrets/firebase.json`.
 
 2) Example (Option A):
-   - `heroku config:set FIREBASE_PROJECT_ID=forem-5d94b -a <app>`
+   - `heroku config:set FCM_PROJECT_ID=forem-5d94b -a <app>`
    - `heroku config:set FIREBASE_SERVICE_ACCOUNT_JSON="$(cat /local/path/firebase.json)" -a <app>`
    - `heroku run 'mkdir -p /app/secrets && echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > /app/secrets/firebase.json' -a <app>`
+   - `heroku config:set GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/firebase.json -a <app>`
 
 3) Send push:
    - `heroku run 'GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/firebase.json FCM_TOKEN=<device_token> TITLE="Test" BODY="Hello from Rails (prod)" rake push:send_token' -a <app>`
@@ -33,6 +34,10 @@ Heroku Staging
 Expected Output
 - Status 200
 - Body includes `name: "projects/.../messages/<id>"`
+
+Environment Vars & Secrets
+- `.env` already includes `GOOGLE_APPLICATION_CREDENTIALS=/home/organicelectronics/forem/firebase-service-account.json` and `FCM_PROJECT_ID=forem-5d94b`; update these to match your environment.
+- `firebase-service-account.json` is ignored by git (see `.gitignore`), so keep a local copy and upload it to Heroku via `FIREBASE_SERVICE_ACCOUNT_JSON` (or another config var) before writing it to `/app/secrets/firebase.json`.
 
 Device Registration Setup
 Before testing registration from the app:
