@@ -128,3 +128,6 @@ doc/
 /app/assets/builds/*
 !/app/assets/builds/.keep
 .qodo
+
+# Firebase service account credentials (do not commit)
+firebase-service-account.json
