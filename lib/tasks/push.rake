@@ -20,4 +20,14 @@ namespace :push do
     puts "Status: #{res[:status]}\nBody: #{res[:body]}"
     abort "Push failed" unless res[:status] == 200
   end
+
+  desc "Ensure ConsumerApp records exist for Forem mobile apps"
+  task setup_apps: :environment do
+    puts "Ensuring ConsumerApp records exist..."
+    ConsumerApps::FindOrCreateAllQuery.call
+    puts "Done. ConsumerApps:"
+    ConsumerApp.where(app_bundle: ConsumerApp::FOREM_BUNDLE).each do |app|
+      puts "- #{app.platform} (#{app.app_bundle})"
+    end
+  end
 end

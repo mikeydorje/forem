@@ -34,6 +34,11 @@ Expected Output
 - Status 200
 - Body includes `name: "projects/.../messages/<id>"`
 
+Device Registration Setup
+Before testing registration from the app:
+1) Ensure ConsumerApp records exist:
+   - `heroku run rake push:setup_apps -a <app>`
+
 Notes
 - This harness bypasses Rpush and sends directly via FCM v1 HTTP API.
 - For production feature work, device registration and event-triggered sends will follow in subsequent PRs.
