@@ -81,8 +81,9 @@
             href="<%= article_url(@article) %>"
             target="_blank"
             rel="noopener noreferrer"
-            class="crayons-link crayons-link--block">
-            🌐 Open in Browser
+            class="flex justify-between crayons-link crayons-link--block w-100">
+            <span class="fw-bold">Open in Browser</span>
+            <%= crayons_icon_tag("external-link", class: "mx-2 shrink-0", aria_hidden: true, title: "Open in Browser") %>
           </a>
         <% end %>
 
