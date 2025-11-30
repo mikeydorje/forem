@@ -468,7 +468,6 @@ module ApplicationHelper
   # @return [TrueClass] true when the request is from ForemWebView
   # @return [FalseClass] false when the request is from a browser
   def forem_webview?
-    request.user_agent.to_s.include?("ForemWebView") ||
-      request.host.include?("forem-prodtest-31be514a34fd.herokuapp.com") # TEMP: for testing
+    request.user_agent.to_s.include?("ForemWebView")
   end
 end
