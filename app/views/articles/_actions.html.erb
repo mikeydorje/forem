@@ -76,6 +76,16 @@
           <a href="#" class="dropdown-link-row crayons-link crayons-link--block"><%= t("views.actions.share.link") %></a>
         </template>
 
+        <% if forem_webview? %>
+          <a
+            href="<%= article_url(@article) %>"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="crayons-link crayons-link--block">
+            🌐 Open in Browser
+          </a>
+        <% end %>
+
         <a href="/report-abuse" class="crayons-link crayons-link--block"><%= t("views.actions.share.report") %></a>
       </div>
     </div>
