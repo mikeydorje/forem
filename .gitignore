@@ -48,6 +48,9 @@ yarn-debug.log*
 
 # Ignore storybook static site generation
 app/javascript/storybook-static/
+
+# Ignore local Copilot instructions
+.github/copilot-instructions.md
 yarn-error.log
 
 # Ignore yarn related files
