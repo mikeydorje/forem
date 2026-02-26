@@ -6,7 +6,7 @@ module DataUpdateScripts
       # Preload actual tagging counts in a single query to avoid N+1
       taggings_counts = ActsAsTaggableOn::Tagging.group(:tag_id).count
       mismatched_tags = []
-      
+
       Tag.find_each do |tag|
         actual_count = taggings_counts[tag.id] || 0
         if tag.taggings_count != actual_count
@@ -31,7 +31,7 @@ module DataUpdateScripts
 
         mismatched_tags.each do |item|
           diff_str = item[:diff] > 0 ? "+#{item[:diff]}" : "#{item[:diff]}"
-          puts format("%-5d %-30s %-15d %-15d %-10s", 
+          puts format("%-5d %-30s %-15d %-15d %-10s",
                      item[:tag].id,
                      item[:tag].name.truncate(28),
                      item[:stored],

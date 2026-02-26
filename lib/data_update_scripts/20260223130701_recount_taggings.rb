@@ -12,8 +12,9 @@ module DataUpdateScripts
         tags_table      = ActsAsTaggableOn::Tag.quoted_table_name
         taggings_table  = ActsAsTaggableOn::Tagging.quoted_table_name
 
-        # First, set all taggings_count values to 0 so tags without taggings are correctly zeroed.
-        connection.execute("UPDATE #{tags_table} SET taggings_count = 0")
+        # First, set taggings_count to 0 only where it's non-zero so tags without taggings are correctly zeroed
+        # without rewriting every row unnecessarily.
+        connection.execute("UPDATE #{tags_table} SET taggings_count = 0 WHERE taggings_count <> 0")
 
         # Then, update taggings_count based on the actual number of taggings per tag.
         update_sql = <<-SQL.squish
@@ -25,14 +26,15 @@ module DataUpdateScripts
             GROUP BY tag_id
           ) AS tag_counts
           WHERE tags.id = tag_counts.tag_id
+            AND tags.taggings_count <> tag_counts.tag_count
         SQL
 
         connection.execute(update_sql)
         duration = (Time.current - start_time).round(2)
         puts "✓ Successfully recounted all taggings in #{duration}s"
-      rescue => e
+      rescue StandardError => e
         puts "✗ Error recounting taggings: #{e.message}"
-        raise e
+        raise
       end
     end
   end

@@ -13,9 +13,8 @@ RSpec.describe DataUpdateScripts::VerifyTaggingCounts do
     create(:article, tags: tag1.name)
     create(:article, tags: tag2.name)
 
-    # Manually break the counter cache using SQL to bypass readonly protection
-    ActiveRecord::Base.connection.execute("UPDATE tags SET taggings_count = 5 WHERE id = #{tag1.id}")
-    tag1.reload
+    # Manually break the counter cache to simulate an incorrect counter
+    tag1.update_column(:taggings_count, 5)
 
     expect { described_class.new.run }.to output(/Tags with mismatched counts: 1/).to_stdout
   end
