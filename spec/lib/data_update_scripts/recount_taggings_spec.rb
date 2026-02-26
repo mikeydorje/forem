@@ -12,9 +12,9 @@ RSpec.describe DataUpdateScripts::RecountTaggings do
     create(:article, tags: tag1.name)
     create(:article, tags: tag2.name)
 
-    # Manually break the counter cache using SQL to bypass readonly protection
-    ActiveRecord::Base.connection.execute("UPDATE tags SET taggings_count = 99 WHERE id = #{tag1.id}")
-    ActiveRecord::Base.connection.execute("UPDATE tags SET taggings_count = 0 WHERE id = #{tag2.id}")
+    # Manually break the counter cache to simulate incorrect counters
+    tag1.update_column(:taggings_count, 99)
+    tag2.update_column(:taggings_count, 0)
 
     described_class.new.run
 
@@ -23,8 +23,7 @@ RSpec.describe DataUpdateScripts::RecountTaggings do
   end
 
   it "handles tags with no taggings" do
-    # Manually set wrong count using SQL
-    ActiveRecord::Base.connection.execute("UPDATE tags SET taggings_count = 5 WHERE id = #{tag1.id}")
+    tag1.update_column(:taggings_count, 5)
 
     described_class.new.run
 
