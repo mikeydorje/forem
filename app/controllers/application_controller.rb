@@ -34,6 +34,7 @@ class ApplicationController < ActionController::Base
       "users.invalid_authenticity_token",
       tags: ["controller_name:#{controller_name}", "path:#{request.fullpath}"],
     )
+    head :unprocessable_entity
   end
 
   rescue_from ApplicationPolicy::UserSuspendedError, with: :respond_with_user_suspended
