@@ -21,18 +21,22 @@ export function initializeActionsPanel(user, path = '') {
     const modActionsMenu = getOrCreateModActionsMenu();
 
     const modContainer = document.getElementById('mod-container');
+    const isDifferentArticle =
+      modContainer &&
+      modContainer.getAttribute('src') !== `${articlePath}/actions_panel`;
 
-    if (
-      !modContainer ||
-      modContainer.getAttribute('src') !== `${articlePath}/actions_panel`
-    ) {
+    if (!modContainer || isDifferentArticle) {
       modActionsMenu.innerHTML = `
         <iframe id="mod-container" src="${articlePath}/actions_panel" title="Moderation panel actions">
         </iframe>
       `;
     }
 
-    modActionsMenu.classList.toggle('showing');
+    if (isDifferentArticle) {
+      modActionsMenu.classList.add('showing');
+    } else {
+      modActionsMenu.classList.toggle('showing');
+    }
 
     // showing close icon in the mod panel if it is opened by clicking the button
     const panelDocument = document.getElementById('mod-container')?.contentDocument;
@@ -47,9 +51,10 @@ export function initializeActionsPanel(user, path = '') {
   }
 
   function bindModActionsMenuButtons() {
-    if (isModerationPage()) {
+    if (isModerationPage() || document.documentElement.dataset.modActionsBound) {
       return;
     }
+    document.documentElement.dataset.modActionsBound = 'true';
 
     document.addEventListener('click', (event) => {
       const button = event.target.closest('.mod-actions-menu-btn');
@@ -60,6 +65,16 @@ export function initializeActionsPanel(user, path = '') {
       event.preventDefault();
       toggleModActionsMenu({ currentTarget: button });
     });
+  }
+
+  if (path) {
+    const modActionsMenu = getOrCreateModActionsMenu();
+    if (!document.getElementById('mod-container')) {
+      modActionsMenu.innerHTML = `
+        <iframe id="mod-container" src="${path}/actions_panel" title="Moderation panel actions">
+        </iframe>
+      `;
+    }
   }
 
   bindModActionsMenuButtons();

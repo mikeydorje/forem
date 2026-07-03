@@ -15,9 +15,9 @@ describe('<Article /> moderation button', () => {
     const { container } = render(
       <Article
         {...commonProps}
-        isBookmarked={false}
         article={article}
         currentTag="javascript"
+        bookmarkClick={jest.fn()}
       />,
     );
 
