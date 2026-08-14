@@ -54,9 +54,7 @@ export const MinimalProfilePreviewCard = ({
               name,
               style: 'full',
             })}
-          >
-            Follow
-          </Button>
+          />
         </div>
         <div
           class="author-preview-metadata-container"
