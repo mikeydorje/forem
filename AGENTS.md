@@ -66,3 +66,10 @@ If you are modifying these agent instructions, you **MUST** replicate your chang
 - **Document All API Changes**: Any time you modify or add any routes, controller actions, or parameters under `/api/*` (such as adding semantic or fuzzy search endpoints), you **MUST** update or create the corresponding RSWAG documentation specs in `spec/requests/api/v1/docs/*_spec.rb` (or matching version).
 - **Regenerate OpenAPI Schema**: After updating the swagger spec files, you **MUST** run the Swagger generation rake task (`bundle exec rake rswag:specs:swaggerize`) to regenerate the `swagger/v1/api_v1.json` file.
 - **Do Not Leave Specs Outdated**: Outdated API specifications cause integration failures for external services, gateway clients, and LLM MCP servers. Always treat specs as part of the core delivery.
+
+<!-- entire-graph:begin -->
+This repo has the entire-graph code graph installed. Before exploring code with
+grep/find/whole-file reads, read .entire/graph-agent.md — resolution-first guidance
+for using graph retrieval, focused source inspection, and verification.
+@.entire/graph-agent.md
+<!-- entire-graph:end -->
