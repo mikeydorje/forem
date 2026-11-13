@@ -1,0 +1,20 @@
+app/javascript/colorPickers/__tests__/replaceTextInputWithColorPicker.test.jsx
+  h_a5e25bc086eb00 1-82
+app/javascript/colorPickers/replaceTextInputWithColorPicker.jsx
+  h_a5e25bc086eb00 5-39,50
+app/views/shared/_logo_design.html.erb
+  h_a5e25bc086eb00 9-10,15,23,30
+spec/views/users/settings_spec.rb
+  h_a5e25bc086eb00 43-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f3e369ad2b75283edc891df0ff2f223ecba9a84b",
+  "prompts": {},
+  "humans": {
+    "h_a5e25bc086eb00": {
+      "author": "Mikey Dorje <mikeydorje@gmail.com>"
+    }
+  }
+}
